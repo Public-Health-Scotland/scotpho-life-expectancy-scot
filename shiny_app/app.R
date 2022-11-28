@@ -1,7 +1,12 @@
+###############################################.
+## ScotPHO - Life expectancy - Scotland ----
+###############################################.
+
 # Code to create shiny chart of annual changes in life expectancy and healthy life expectancy by sex
 # This is published in the following section of the ScotPHO website: 
 # Population Dynamics > Deaths and life expectancy > Data > Scotland
 
+# See README for details of data sources.
 
 ############################.
 ## Global ----
@@ -12,10 +17,10 @@
 library(dplyr) #data manipulation
 library(plotly) #charts
 library(shiny) #shiny apps
-library(readr) #reading csvs
 
 # Data file
-le_hle_data <- read_csv("data/change_le_hle_scotland.csv")
+le_hle_data <- readRDS(paste0("data/le_hle_scotland.rds"))
+
 
 ############################.
 ## Visual interface ----
@@ -23,26 +28,26 @@ le_hle_data <- read_csv("data/change_le_hle_scotland.csv")
 #Height and widths as percentages to allow responsiveness
 ui <- fluidPage(style="width: 650px; height: 500px; ",
                 div(style= "width:100%",
-                    h4("Chart 2. Annual changes in life expectancy and healthy life expectancy in Scotland"),
+                    h4("Chart 2. Life expectancy and healthy life expectancy in Scotland"), 
                     div(style = "width: 50%; float: left;",
                         selectInput("measure", label = "Select a measure type",
-                                    choices = c("Life expectancy", "Healthy life expectancy"), 
-                                    selected = "Life expectancy"))),
+                                    choices = c("Life expectancy at birth",
+                                                "Healthy life expectancy at birth",
+                                                "Annual change in life expectancy", 
+                                                "Annual change in healthy life expectancy"),
+                                    selected = "Life expectancy at birth"))),
                 
-                # Suggest removing this filter
-                # div(style = "width: 40%; float: left;",
-                #     selectInput("difference", label = "Difference from previous year",
-                #                 choices = c("Years", "Weeks"), 
-                #                 selected = "Years")),
-                
+
                 div(style = "width: 25%; float: left;",
                     selectInput("sex", label = "Select sex",
                                 choices = c("Male", "Female"), 
-                                selected = "Male", multiple = T)),
+                                selected = c("Male", "Female"),
+                                multiple = T)),
                 
                 
                 div(style= "width:100%; float: left;", #Main panel
                     plotlyOutput("chart", width = "100%", height = "350px"),
+                    h5(uiOutput("axis_note")),
                     p(div(style = "width: 25%; float: left;", #Footer
                           HTML("Source: <a href='https://www.nrscotland.gov.uk/statistics-and-data/statistics/statistics-by-theme/life-expectancy' target='_blank'>NRS</a>")),
                       div(style = "width: 25%; float: left;",
@@ -55,26 +60,50 @@ ui <- fluidPage(style="width: 650px; height: 500px; ",
 ############################.
 server <- function(input, output) {
   
+  # adds a note to highlight that axis does not start at zero for some measures
+  output$axis_note <- renderText({
+    
+   if(input$measure %in% c("Life expectancy at birth", "Healthy life expectancy at birth")) {
+      
+      axis_note <- paste0("note: y-axis does not start at zero")}
+    
+    else {}
+    
+    })
+  
+  # creates chart
   output$chart <- renderPlotly({
     
+
     # Data
     chart_data <- le_hle_data  %>% 
-      filter(Measure == input$measure & Difference == "Years"
-               #Difference == input$difference 
-             & Sex %in% input$sex
-      )
+      filter(Measure == input$measure & Difference == "Years" & Sex %in% input$sex)
     
-    # Information to be displayed in tooltip
-    tooltip <- c(paste0("Time period (3 year average): ", chart_data$Time_period, "<br>",
-                        "Difference from previous year (in years): ", chart_data$Value, "<br>"))
-                        #"Difference from previous year in ", input$difference, ": ", chart_data$Value, "<br>"))
+    if(input$measure %in% c("Life expectancy at birth", "Healthy life expectancy at birth")) {
+      
+      yaxistitle <- paste0("Life expectancy (years)")
+      
+      
+      # Information to be displayed in tooltip
+      tooltip <- c(paste0("Time period (3 year average): ", chart_data$Time_period, "<br>",
+                          input$measure, " (years): ", chart_data$Value, "<br>"))
+      
+    }
     
-    # y-axis title - add to layout if not dynamic
-    yaxistitle <- paste0("Annual change in years")
-    #yaxistitle <- paste0("Annual change in ", input$difference)
+     else 
+       {
+       
+       yaxistitle <- paste0("Annual change (years)")
+      
+       
+       # Information to be displayed in tooltip
+       tooltip <- c(paste0("Time period (3 year average): ", chart_data$Time_period, "<br>",
+                           "Difference from previous year (years): ", chart_data$Value, "<br>"))
+       }
     
+
     # Define line colours
-    pal <- c('#0078D4', '#1E7F84')
+    pal <- c('#9B4393', '#1E7F84')
     
     # Define number of lines on chart
     num <- length(unique(chart_data$Sex))
@@ -94,7 +123,8 @@ server <- function(input, output) {
         
      # Layout
       layout(annotations = list(), #It needs this because of a buggy behaviour
-             yaxis = list(title = yaxistitle, rangemode="tozero", fixedrange=TRUE), 
+             yaxis = list(title = yaxistitle, #rangemode="tozero", 
+                          fixedrange=TRUE), 
              xaxis = list(title = "3 year average",  fixedrange=TRUE, tickangle = 270),  
              font = list(family = 'Arial, sans-serif'), #font
              margin = list(pad = 4, t = 50), #margin-paddings
@@ -108,7 +138,7 @@ server <- function(input, output) {
   
   # Allow user to download data
   output$download_data <- downloadHandler(
-    filename =  'annual_changes_in_le_and_hle_data.csv', 
+    filename =  'le_and_hle_data_scotland.csv', 
     content = function(file) {
       write.csv(le_hle_data, file, row.names=FALSE) })
   
