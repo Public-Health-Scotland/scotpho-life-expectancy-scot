@@ -28,14 +28,14 @@ le_hle_data <- readRDS(paste0("data/le_hle_scotland.rds"))
 #Height and widths as percentages to allow responsiveness
 ui <- fluidPage(style="width: 650px; height: 500px; ",
                 div(style= "width:100%",
-                    h4("Chart 2. Life expectancy and healthy life expectancy in Scotland"), 
+                    h4("Chart 2. Life expectancy and healthy life expectancy at birth in Scotland"), 
                     div(style = "width: 50%; float: left;",
                         selectInput("measure", label = "Select a measure type",
-                                    choices = c("Life expectancy at birth",
-                                                "Healthy life expectancy at birth",
+                                    choices = c("Life expectancy",
+                                                "Healthy life expectancy",
                                                 "Annual change in life expectancy", 
                                                 "Annual change in healthy life expectancy"),
-                                    selected = "Life expectancy at birth"))),
+                                    selected = "Life expectancy"))),
                 
 
                 div(style = "width: 25%; float: left;",
@@ -63,7 +63,7 @@ server <- function(input, output) {
   # adds a note to highlight that axis does not start at zero for some measures
   output$axis_note <- renderText({
     
-   if(input$measure %in% c("Life expectancy at birth", "Healthy life expectancy at birth")) {
+   if(input$measure %in% c("Life expectancy", "Healthy life expectancy")) {
       
       axis_note <- paste0("note: y-axis does not start at zero")}
     
@@ -79,7 +79,7 @@ server <- function(input, output) {
     chart_data <- le_hle_data  %>% 
       filter(Measure == input$measure & Difference == "Years" & Sex %in% input$sex)
     
-    if(input$measure %in% c("Life expectancy at birth", "Healthy life expectancy at birth")) {
+    if(input$measure %in% c("Life expectancy", "Healthy life expectancy")) {
       
       yaxistitle <- paste0("Life expectancy (years)")
       
