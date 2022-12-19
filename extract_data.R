@@ -12,6 +12,9 @@ library(readr)        # to write csv
 library(dplyr)        # to get %>% operator
 # datasets <- ods_all_datasets() # to see available datasets on statistic.gov.scot
 
+# Setting file permissions to anyone to allow writing/overwriting of project files
+Sys.umask("006")
+
 # UPDATE the analyst's folder - where data should be saved for shiny app to run
 shiny_folder <- "/PHI_conf/ScotPHO/1.Analysts_space/Catherine/scotpho-life-expectancy-scot/shiny_app/data/"
 
