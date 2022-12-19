@@ -19,7 +19,7 @@ library(plotly) #charts
 library(shiny) #shiny apps
 
 # Data file
-le_hle_data <- readRDS(paste0("data/le_hle_scotland.rds"))
+le_hle_data <- readRDS(paste0("data/le_hle_scot.rds"))
 
 
 ############################.
@@ -77,16 +77,16 @@ server <- function(input, output) {
 
     # Data
     chart_data <- le_hle_data  %>% 
-      filter(Measure == input$measure & Difference == "Years" & Sex %in% input$sex)
+      filter(measure == input$measure & sex %in% input$sex)
     
     if(input$measure %in% c("Life expectancy", "Healthy life expectancy")) {
       
-      yaxistitle <- paste0("Life expectancy (years)")
+      yaxistitle <- paste0(input$measure, " (years)")
       
       
       # Information to be displayed in tooltip
-      tooltip <- c(paste0("Time period (3 year average): ", chart_data$Time_period, "<br>",
-                          input$measure, " (years): ", chart_data$Value, "<br>"))
+      tooltip <- c(paste0("Time period (3 year average): ", chart_data$year, "<br>",
+                          input$measure, " (years): ", chart_data$value, "<br>"))
       
     }
     
@@ -97,16 +97,23 @@ server <- function(input, output) {
       
        
        # Information to be displayed in tooltip
-       tooltip <- c(paste0("Time period (3 year average): ", chart_data$Time_period, "<br>",
-                           "Difference from previous year (years): ", chart_data$Value, "<br>"))
+       tooltip <- c(paste0("Time period (3 year average): ", chart_data$year, "<br>",
+                           "Difference from previous year (years): ", chart_data$value, "<br>"))
        }
     
 
     # Define line colours
     pal <- c('#9B4393', '#1E7F84')
     
+    # set number of ticks depending on measure selected
+    if (input$measure %in% c("Life expectancy", "Annual change in life expectancy")) 
+      
+    {tick_freq <- 2}
+    
+    else {tick_freq <- 1}
+    
     # Define number of lines on chart
-    num <- length(unique(chart_data$Sex))
+    num <- length(unique(chart_data$sex))
     
     # Buttons to remove from plot
     bttn_remove <-  list('select2d', 'lasso2d', 'zoomIn2d', 'zoomOut2d',
@@ -114,10 +121,10 @@ server <- function(input, output) {
                          'hoverClosestCartesian', 'zoom2d', 'pan2d', 'resetScale2d')
     
     
-    plot <- plot_ly(data = chart_data, x=~Time_period, y = ~Value, 
-                    color= ~Sex, colors = pal[1:num], 
+    plot <- plot_ly(data = chart_data, x=~year, y = ~value, 
+                    color= ~sex, colors = pal[1:num], 
                     type = "scatter", mode = 'lines+markers', 
-                    symbol= ~Sex, symbols = list('circle','square'), marker = list(size= 7),
+                    symbol= ~sex, symbols = list('circle','square'), marker = list(size= 8),
                     width = 650, height = 350,
                     text=tooltip, hoverinfo="text") %>%  
         
@@ -125,7 +132,10 @@ server <- function(input, output) {
       layout(annotations = list(), #It needs this because of a buggy behaviour
              yaxis = list(title = yaxistitle, #rangemode="tozero", 
                           fixedrange=TRUE), 
-             xaxis = list(title = "3 year average",  fixedrange=TRUE, tickangle = 270),  
+             xaxis = list(title = "3 year average",  fixedrange=TRUE,
+                          dtick = tick_freq,
+                          tickangle = 45
+                          ),  
              font = list(family = 'Arial, sans-serif'), #font
              margin = list(pad = 4, t = 50), #margin-paddings
              hovermode = 'false',  # to get hover compare mode as default
