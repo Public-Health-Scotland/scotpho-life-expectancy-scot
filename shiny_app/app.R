@@ -19,7 +19,7 @@ library(plotly) #charts
 library(shiny) #shiny apps
 
 # Data file
-le_hle_data <- readRDS(paste0("data/le_hle_scot.rds"))
+le_hle_data <- readRDS(paste0(shiny_folder,"le_hle_scot.rds"))
 
 
 ############################.
