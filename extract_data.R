@@ -16,10 +16,10 @@ library(dplyr)        # to get %>% operator
 Sys.umask("006")
 
 # UPDATE the analyst's folder - where data should be saved for shiny app to run
-shiny_folder <- "/PHI_conf/ScotPHO/1.Analysts_space/Catherine/scotpho-life-expectancy-scot/shiny_app/data/"
+shiny_folder <- "/PHI_conf/ScotPHO/1.Analysts_space/Vicky/scotpho-life-expectancy-scot/shiny_app/data/"
 
 # UPDATE data file location
-data_folder <- "/PHI_conf/ScotPHO/Website/Topics/Life expectancy/202212_update/"
+data_folder <- "/PHI_conf/ScotPHO/Website/Topics/Life expectancy/202303_update/"
 
 
 # parameters used to filter the opendata
@@ -61,7 +61,7 @@ le = ods_dataset("Life-Expectancy", refPeriod = date_range_le, geography = "sc",
 ods_structure("healthy-life-expectancy") # see structure and variables of this dataset
 
 # date range for HLE
-date_range_hle <- c("2014-2016", "2015-2017", "2016-2018", "2017-2019", "2018-2020") # add most recent year
+date_range_hle <- c("2014-2016", "2015-2017", "2016-2018", "2017-2019", "2018-2020","2019-2021") # add most recent year
 
 # extract data
 hle = ods_dataset("healthy-life-expectancy", refPeriod = date_range_hle, geography = "sc",
@@ -97,6 +97,9 @@ change <- le_hle %>%
 # join datasets together
 final <- rbind(le_hle, change)
 
+# round measure to 1 decimal place
+final <- final %>%
+  mutate(value=round(value,2))
 
 # save as csv
 write_csv(final, paste0(data_folder, "le_hle_scot.csv"))
