@@ -18,12 +18,8 @@ library(dplyr) #data manipulation
 library(plotly) #charts
 library(shiny) #shiny apps
 
-# UPDATE the analyst's folder - where data should be saved for shiny app to run
-shiny_folder <- "/PHI_conf/ScotPHO/1.Analysts_space/Vicky/scotpho-life-expectancy-scot/shiny_app/data/"
 
-# Data file
-le_hle_data <- readRDS(paste0(shiny_folder,"le_hle_scot.rds"))
-
+le_hle_data <- readRDS("data/le_hle_scot.rds")
 
 ############################.
 ## Visual interface ----
