@@ -27,7 +27,7 @@ le_hle_data <- readRDS("data/le_hle_scot.rds")
 #Height and widths as percentages to allow responsiveness
 ui <- fluidPage(style="width: 650px; height: 500px; ",
                 div(style= "width:100%",
-                    h4("Chart 2. Life expectancy and healthy life expectancy at birth in Scotland"), 
+                    h4("Chart 1. Life expectancy and healthy life expectancy at birth in Scotland"), 
                     div(style = "width: 50%; float: left;",
                         selectInput("measure", label = "Select a measure type",
                                     choices = c("Life expectancy",
