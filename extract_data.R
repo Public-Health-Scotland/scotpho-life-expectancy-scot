@@ -10,7 +10,7 @@
 library(opendatascot) # to extract from statistics.gov
 library(readr)        # to write csv
 library(dplyr)        # to get %>% operator
-# datasets <- ods_all_datasets() # to see available datasets on statistic.gov.scot
+# datasets <- ods_all_datasets() # to see available datasets on statistics.gov.scot
 
 # Setting file permissions to anyone to allow writing/overwriting of project files
 Sys.umask("006")
@@ -62,7 +62,8 @@ le = ods_dataset("Life-Expectancy", refPeriod = date_range_le, geography = "sc",
 ods_structure("healthy-life-expectancy") # see structure and variables of this dataset
 
 # date range for HLE
-date_range_hle <- c("2014-2016", "2015-2017", "2016-2018", "2017-2019", "2018-2020","2019-2021") # add most recent year
+#date_range_hle <- c("2014-2016", "2015-2017", "2016-2018", "2017-2019", "2018-2020","2019-2021") # add most recent year
+date_range_hle <- c("2015-2017", "2016-2018", "2017-2019", "2018-2020","2019-2021") # add most recent year
 
 # extract data
 hle = ods_dataset("healthy-life-expectancy", refPeriod = date_range_hle, geography = "sc",
@@ -100,7 +101,7 @@ final <- rbind(le_hle, change)
 
 # round measure to 1 decimal place
 final <- final %>%
-  mutate(value=round(value,2))
+  mutate(value=round(value,1))
 
 # save as csv
 write_csv(final, paste0(data_folder, "le_hle_scot.csv"))
