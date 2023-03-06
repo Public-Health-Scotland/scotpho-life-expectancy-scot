@@ -101,7 +101,7 @@ final <- rbind(le_hle, change)
 
 # round measure to 1 decimal place
 final <- final %>%
-  mutate(value=round(value,1))
+  mutate(value=round(value,2))
 
 # save as csv
 write_csv(final, paste0(data_folder, "le_hle_scot.csv"))
