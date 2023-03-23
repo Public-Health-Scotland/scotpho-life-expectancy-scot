@@ -81,32 +81,40 @@ hle = ods_dataset("healthy-life-expectancy", refPeriod = date_range_hle, geograp
 
 
 # combine datasets
-le_hle <- rbind(le, hle) %>% arrange(measure, sex, year)
-
-# create the annual change measure
-change <- le_hle %>% 
-  group_by(measure, sex) %>% 
-  mutate(diff = value - lag(value),
-         measure = case_when(measure == "Life expectancy" ~ 
-                               "Annual change in life expectancy",
-                             measure == "Healthy life expectancy" ~ 
-                               "Annual change in healthy life expectancy")) %>% 
-  ungroup %>% 
-  select(-value) %>% 
-  rename("value" = diff) %>% 
-  filter(!is.na(value)) # remove NA from the annual change calculation
-
-# join datasets together
-final <- rbind(le_hle, change)
-
-# round measure to 1 decimal place
-final <- final %>%
+le_hle <- rbind(le, hle) %>% arrange(measure, sex, year) %>%
   mutate(value=round(value,2))
 
 # save as csv
-write_csv(final, paste0(data_folder, "le_hle_scot.csv"))
+write_csv(le_hle, paste0(data_folder, "le_hle_scot.csv"))
 
 # Save data to shiny_app folder
-saveRDS(final, file = paste0(shiny_folder,"le_hle_scot.rds"))
+saveRDS(le_hle, file = paste0(shiny_folder,"le_hle_scot.rds"))
+
+# temp remove annual change stats until we can convert to weeks and get agreement with NRS figures
+# # create the annual change measure
+# change <- le_hle %>% 
+#   group_by(measure, sex) %>% 
+#   mutate(diff = (value - lag(value))*52.14, #should be in weeks not years
+#          measure = case_when(measure == "Life expectancy" ~ 
+#                                "Annual change in life expectancy",
+#                              measure == "Healthy life expectancy" ~ 
+#                                "Annual change in healthy life expectancy")) %>% 
+#   ungroup %>% 
+#   select(-value) %>% 
+#   rename("value" = diff) %>% 
+#   filter(!is.na(value)) # remove NA from the annual change calculation
+# 
+# # join datasets together
+# final <- rbind(le_hle, change)
+# 
+# # round measure to 1 decimal place
+# final <- final %>%
+#   mutate(value=round(value,2))
+# 
+# # save as csv
+# write_csv(final, paste0(data_folder, "le_hle_scot.csv"))
+# 
+# # Save data to shiny_app folder
+# saveRDS(final, file = paste0(shiny_folder,"le_hle_scot.rds"))
 
 # END

@@ -31,9 +31,9 @@ ui <- fluidPage(style="width: 650px; height: 500px; ",
                     div(style = "width: 50%; float: left;",
                         selectInput("measure", label = "Select a measure type",
                                     choices = c("Life expectancy",
-                                                "Healthy life expectancy",
-                                                "Annual change in life expectancy", 
-                                                "Annual change in healthy life expectancy"),
+                                                "Healthy life expectancy"),
+                                               # "Annual change in life expectancy", 
+                                              # "Annual change in healthy life expectancy"),
                                     selected = "Life expectancy"))),
                 
 
