@@ -64,7 +64,9 @@ server <- function(input, output) {
     
    if(input$measure %in% c("Life expectancy", "Healthy life expectancy")) {
       
-      axis_note <- paste0("note: y-axis does not start at zero")}
+      axis_note <- paste0("note: y-axis does not start at zero <br> 
+                          2020-2022 Life expectancy estimates are provisional <br>
+                          Publication of 2020-2022 Healthy life expectancy delayed until 2024")}
     
     else {}
     

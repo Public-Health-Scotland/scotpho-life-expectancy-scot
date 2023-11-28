@@ -28,7 +28,6 @@ urban_rural <- c("all")
 age_select <- "0-years"
 
 
-
 ###############################################.
 # Life expectancy data
 ###############################################.
@@ -54,6 +53,20 @@ le = ods_dataset("Life-Expectancy", refPeriod = date_range_le, geography = "sc",
   select(c("year", "measure", "sex", "value")) %>% 
   arrange(sex, year)
 
+# 2020-2022 data released as provisional figures not available within stats.gov.scot
+# sourced provisional figures from NRS website and manually formatted to allow December 2023 scotpho website update
+# https://www.nrscotland.gov.uk/statistics-and-data/statistics/statistics-by-theme/life-expectancy/life-expectancy-in-scotland/life-expectancy-in-scotland-2020-2022
+# excel data from fig 5 and fig 6 saved to PHS network folder
+
+library(openxlsx)
+# open le data 
+le_2020to2022_scot <- read.xlsx("/PHI_conf/ScotPHO/Life Expectancy/Data/Source Data/NRS data/2020 to 2022 provisional life expectancy from NRS website.xlsx", sheet = 1) %>%
+  filter(areaname=="Scotland") %>%
+  select(year,measure,sex,le) %>%
+  rename(value=le)
+
+# combine stats.gov data with t
+le <- rbind(le, le_2020to2022_scot) %>% arrange(measure, sex, year)
 
 ###############################################.
 # Healthy life expectancy data
@@ -79,6 +92,9 @@ hle = ods_dataset("healthy-life-expectancy", refPeriod = date_range_hle, geograp
   arrange(year, sex)
 
 
+###############################################.
+# Combined LE and HLE data
+###############################################.
 
 # combine datasets
 le_hle <- rbind(le, hle) %>% arrange(measure, sex, year) %>%
