@@ -10,6 +10,7 @@
 library(opendatascot) # to extract from statistics.gov
 library(readr)        # to write csv
 library(dplyr)        # to get %>% operator
+library(tidyr)      # pivot wider
 # datasets <- ods_all_datasets() # to see available datasets on statistics.gov.scot
 
 # Setting file permissions to anyone to allow writing/overwriting of project files
@@ -43,14 +44,18 @@ date_range_le <- c("2001-2003", "2002-2004", "2003-2005", "2004-2006", "2005-200
 # extract data
 le = ods_dataset("Life-Expectancy", refPeriod = date_range_le, geography = "sc",
                  urbanRuralClassification = urban_rural,
-                 simdQuintiles = simd, measureType = "count") %>%
+                 simdQuintiles = simd) %>%
   setNames(tolower(names(.))) %>%
   rename("year" = refperiod) %>% 
   filter(age == age_select) %>% 
   mutate(measure = "Life expectancy",
          sex = case_when(sex == "male" ~ "Male",
-                         sex == "female" ~ "Female")) %>% 
-  select(c("year", "measure", "sex", "value")) %>% 
+                         sex == "female" ~ "Female")) |>
+  select(c("year", "measure", "sex", "measuretype", "value")) |>
+  pivot_wider(names_from="measuretype" ,values_from="value") |>
+  rename(value = count,
+         lci = "95-lower-confidence-limit",
+         uci = "95-upper-confidence-limit") |>
   arrange(sex, year)
 
 #stats.gov open data platform now updated but leaving the chunk below commented out
@@ -84,15 +89,19 @@ date_range_hle <- c("2015-2017", "2016-2018", "2017-2019", "2018-2020","2019-202
 # extract data
 hle = ods_dataset("healthy-life-expectancy", refPeriod = date_range_hle, geography = "sc",
                   urbanRuralClassification = urban_rural,
-                  simdQuintiles = simd, measureType = "count") %>%
+                  simdQuintiles = simd) %>%
   setNames(tolower(names(.))) %>%
   rename("year" = refperiod) %>% 
   filter(age == age_select) %>% 
   mutate(measure = "Healthy life expectancy",
          sex = case_when(sex == "male" ~ "Male",
                          sex == "female" ~ "Female")) %>% 
-  select(c("year", "measure", "sex", "value" )) %>% 
-  arrange(year, sex)
+  select(c("year", "measure", "measuretype", "sex", "value" )) |>
+  pivot_wider(names_from="measuretype" ,values_from="value") |>
+  rename(value = count,
+         lci = "95-lower-confidence-limit",
+         uci = "95-upper-confidence-limit") |>
+  arrange(sex, year)
 
 
 ###############################################.
