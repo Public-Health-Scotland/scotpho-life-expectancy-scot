@@ -18,7 +18,6 @@ library(dplyr) #data manipulation
 library(plotly) #charts
 library(shiny) #shiny apps
 
-
 le_hle_data <- readRDS("data/le_hle_scot.rds")
 
 ############################.
@@ -45,10 +44,12 @@ ui <- fluidPage(style="width: 650px; height: 500px; ",
                 
                 
                 div(style= "width:100%; float: left;", #Main panel
+                    (div(title="Show or hide the 95% confidence intervals for the data selected.", # tooltip
+                    checkboxInput("ci_trend", label = "95% confidence intervals", value = FALSE))),
                     plotlyOutput("chart", width = "100%", height = "350px"),
                     h5(uiOutput("axis_note")),
                     p(div(style = "width: 25%; float: left;", #Footer
-                          HTML("Source: <a href='https://www.nrscotland.gov.uk/statistics-and-data/statistics/statistics-by-theme/life-expectancy' target='_blank'>NRS</a>")),
+                          HTML("Source: <a href='https://www.nrscotland.gov.uk/statistics-and-data/births-deaths-marriages-and-life-expectancy/#' target='_blank'>NRS</a>")),
                       div(style = "width: 25%; float: left;",
                           downloadLink('download_data', 'Download data')))
                     )
@@ -63,19 +64,15 @@ server <- function(input, output) {
   output$axis_note <- renderText({
     
    if(input$measure %in% c("Life expectancy", "Healthy life expectancy")) {
-      
       axis_note <- paste0("note: y-axis does not start at zero <br> 
                           2020-2022 Life expectancy estimates are provisional <br>
-                          Publication of 2020-2022 Healthy life expectancy delayed until 2024")}
-    
+                          Publication of 2020-2022 Healthy life expectancy delayed until 2025")}
     else {}
-    
     })
   
   # creates chart
   output$chart <- renderPlotly({
     
-
     # Data
     chart_data <- le_hle_data  %>% 
       filter(measure == input$measure & sex %in% input$sex)
@@ -84,23 +81,16 @@ server <- function(input, output) {
       
       yaxistitle <- paste0(input$measure, " (years)")
       
-      
       # Information to be displayed in tooltip
       tooltip <- c(paste0("Time period (3 year average): ", chart_data$year, "<br>",
                           input$measure, " (years): ", chart_data$value, "<br>"))
-      
     }
     
-     else 
-       {
-       
-       yaxistitle <- paste0("Annual change (years)")
-      
-       
-       # Information to be displayed in tooltip
+     else #technically the option to present annual change in years not available - although might add back at some point
+       { yaxistitle <- paste0("Annual change (years)")
+       #Information to be displayed in tooltip
        tooltip <- c(paste0("Time period (3 year average): ", chart_data$year, "<br>",
-                           "Difference from previous year (years): ", chart_data$value, "<br>"))
-       }
+                         "Difference from previous year (years): ", chart_data$value, "<br>"))}
     
 
     # Define line colours
@@ -108,9 +98,7 @@ server <- function(input, output) {
     
     # set number of ticks depending on measure selected
     if (input$measure %in% c("Life expectancy", "Annual change in life expectancy")) 
-      
     {tick_freq <- 2}
-    
     else {tick_freq <- 1}
     
     # Define number of lines on chart
@@ -128,6 +116,10 @@ server <- function(input, output) {
                     symbol= ~sex, symbols = list('circle','square'), marker = list(size= 8),
                     width = 650, height = 350,
                     text=tooltip, hoverinfo="text") %>%  
+      
+      
+      # add_ribbons(ymin = ~lci, ymax = ~uci, showlegend = F,
+      #             opacity = 0.2) %>%
         
      # Layout
       layout(annotations = list(), #It needs this because of a buggy behaviour
@@ -141,8 +133,20 @@ server <- function(input, output) {
              margin = list(pad = 4, t = 50), #margin-paddings
              hovermode = 'false',  # to get hover compare mode as default
              legend = list(orientation = "h", x=0, y=1.2)) %>% 
-      config(displayModeBar= T, displaylogo = F, editable =F, modeBarButtonsToRemove = bttn_remove) 
-    # taking out plotly logo and collaborate button
+      # taking out plotly logo and collaborate button
+            config(displayModeBar= T, displaylogo = F, editable =F, modeBarButtonsToRemove = bttn_remove) 
+
+    #Adding confidence intervals depending on user input
+    if (input$ci_trend == TRUE) {
+      plot %>% 
+        add_ribbons(data = chart_data, ymin = ~lci, ymax = ~uci, showlegend = F,
+                    opacity = 0.2) 
+      
+    } else if (input$ci_trend == FALSE) {
+      plot
+    }    
+    
+    
     
   }) 
   
