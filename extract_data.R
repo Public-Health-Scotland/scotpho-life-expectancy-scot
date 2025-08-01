@@ -11,15 +11,19 @@ library(opendatascot) # to extract from statistics.gov
 library(readr)        # to write csv
 library(dplyr)        # to get %>% operator
 library(tidyr)      # pivot wider
+library(readxl)     # to open ONS data
 # datasets <- ods_all_datasets() # to see available datasets on statistics.gov.scot
 
 # Setting file permissions to anyone to allow writing/overwriting of project files
 Sys.umask("006")
 
-# UPDATE the analyst's folder - where data should be saved for shiny app to run
+# HLE data saved in life expectancy network folder.
+source_network <- "/PHI_conf/ScotPHO/Life Expectancy/Data/Source Data/HLE data with CI/"
+
+# If you aren't analyst named in file path then consider UPDATING the filepath
 shiny_folder <- "/PHI_conf/ScotPHO/1.Analysts_space/Vicky/scotpho-life-expectancy-scot/shiny_app/data/"
 
-# UPDATE data file location
+# UPDATE data file location each year if you want a record of what data was published historically
 data_folder <- "/PHI_conf/ScotPHO/Website/Topics/Life expectancy/202507_update/"
 
 
@@ -51,7 +55,7 @@ le = ods_dataset("Life-Expectancy", refPeriod = date_range_le, geography = "sc",
   mutate(measure = "Life expectancy",
          sex = case_when(sex == "male" ~ "Male",
                          sex == "female" ~ "Female")) |>
-  select(c("year", "measure", "sex", "measuretype", "value")) |>
+  select(c("year", "measure", "sex", "measuretype", "value"))|>
   pivot_wider(names_from="measuretype" ,values_from="value") |>
   rename(value = count,
          lci = "95-lower-confidence-limit",
@@ -80,28 +84,65 @@ le = ods_dataset("Life-Expectancy", refPeriod = date_range_le, geography = "sc",
 # Healthy life expectancy data
 ###############################################.
 
-ods_structure("healthy-life-expectancy") # see structure and variables of this dataset
+# Open data downloaded from NRS website latest HLE publication pages
+# https://www.nrscotland.gov.uk/publications/healthy-life-expectancy-2021-2023/
+# (data read in  comes from ONS pivot table manipulated to include time series hle at birth data for all geographies and both sexes) 
 
-# date range for HLE
-#date_range_hle <- c("2014-2016", "2015-2017", "2016-2018", "2017-2019", "2018-2020","2019-2021") # add most recent year
-date_range_hle <- c("2015-2017", "2016-2018", "2017-2019", "2018-2020","2019-2021") # add most recent year
+ons_data <- read_excel((paste0(source_network,"ons-data-tables (from NRS HLE Publication July 2025).xlsx")), sheet = "pivot_extract") %>%
+  setNames(tolower(names(.))) |>
+  rename(value=hle,
+         areacode = 'area code',
+         areaname = 'area name') |>
+  mutate(year =paste0(substr(period,1,4),"-",substr(period,9,12)),
+         measure = "Healthy life expectancy")|>
+  select(areacode, areaname, year, measure, sex, value, uci,lci )
 
-# extract data
-hle = ods_dataset("healthy-life-expectancy", refPeriod = date_range_hle, geography = "sc",
-                  urbanRuralClassification = urban_rural,
-                  simdQuintiles = simd) %>%
-  setNames(tolower(names(.))) %>%
-  rename("year" = refperiod) %>% 
-  filter(age == age_select) %>% 
-  mutate(measure = "Healthy life expectancy",
-         sex = case_when(sex == "male" ~ "Male",
-                         sex == "female" ~ "Female")) %>% 
-  select(c("year", "measure", "measuretype", "sex", "value" )) |>
-  pivot_wider(names_from="measuretype" ,values_from="value") |>
-  rename(value = count,
-         lci = "95-lower-confidence-limit",
-         uci = "95-upper-confidence-limit") |>
-  arrange(sex, year)
+
+# save scotland level data 
+scot_hle <-ons_data |>
+  filter(areacode=="S92000003") |>
+  select(-areaname, -areacode)
+
+# save NHS board data for board shiny app
+# (see repo https://github.com/Public-Health-Scotland/scotpho-life-expectancy-hb)
+hb_hle <-ons_data |>
+  filter(substr(areacode,1,3)=="S08")
+write_csv(hb_hle, paste0(data_folder, "/hle_nhsboard.csv"))
+
+# save NHS board data for council shiny app
+#(see repo https://github.com/Public-Health-Scotland/scotpho-life-expectancy-ca )
+ca_hle <-ons_data |>
+  filter(substr(areacode,1,3)=="S12")
+write_csv(ca_hle, paste0(data_folder, "/hle_ca.csv"))
+
+
+
+# PRE-July 2025 calculation methodology change HLE data could be sourced from statistics.gov
+# Leaving the syntax for data extraction but commented out in case the new data is made available in opendata tool in future
+# or in case there is a need to source historic data.
+
+# ods_structure("healthy-life-expectancy") # see structure and variables of this dataset
+# 
+# # date range for HLE
+# #date_range_hle <- c("2014-2016", "2015-2017", "2016-2018", "2017-2019", "2018-2020","2019-2021") # add most recent year
+# date_range_hle <- c("2015-2017", "2016-2018", "2017-2019", "2018-2020","2019-2021") # add most recent year
+# 
+# # extract data
+# hle = ods_dataset("healthy-life-expectancy", refPeriod = date_range_hle, geography = "sc",
+#                   urbanRuralClassification = urban_rural,
+#                   simdQuintiles = simd) %>%
+#   setNames(tolower(names(.))) %>%
+#   rename("year" = refperiod) %>% 
+#   filter(age == age_select) %>% 
+#   mutate(measure = "Healthy life expectancy",
+#          sex = case_when(sex == "male" ~ "Male",
+#                          sex == "female" ~ "Female")) %>% 
+#   select(c("year", "measure", "measuretype", "sex", "value" )) |>
+#   pivot_wider(names_from="measuretype" ,values_from="value") |>
+#   rename(value = count,
+#          lci = "95-lower-confidence-limit",
+#          uci = "95-upper-confidence-limit") |>
+#   arrange(sex, year)
 
 
 ###############################################.
@@ -109,9 +150,8 @@ hle = ods_dataset("healthy-life-expectancy", refPeriod = date_range_hle, geograp
 ###############################################.
 
 
-
 # combine datasets
-le_hle <- rbind(le, hle) %>% arrange(measure, sex, year) %>%
+le_hle <- rbind(le, scot_hle) %>% arrange(measure, sex, year) %>%
   mutate(value=round(value,2))
 
 # save as csv
@@ -119,32 +159,5 @@ write_csv(le_hle, paste0(data_folder, "le_hle_scot.csv"))
 
 # Save data to shiny_app folder
 saveRDS(le_hle, file = paste0(shiny_folder,"le_hle_scot.rds"))
-
-# temp remove annual change stats until we can convert to weeks and get agreement with NRS figures
-# # create the annual change measure
-# change <- le_hle %>% 
-#   group_by(measure, sex) %>% 
-#   mutate(diff = (value - lag(value))*52.14, #should be in weeks not years
-#          measure = case_when(measure == "Life expectancy" ~ 
-#                                "Annual change in life expectancy",
-#                              measure == "Healthy life expectancy" ~ 
-#                                "Annual change in healthy life expectancy")) %>% 
-#   ungroup %>% 
-#   select(-value) %>% 
-#   rename("value" = diff) %>% 
-#   filter(!is.na(value)) # remove NA from the annual change calculation
-# 
-# # join datasets together
-# final <- rbind(le_hle, change)
-# 
-# # round measure to 1 decimal place
-# final <- final %>%
-#   mutate(value=round(value,2))
-# 
-# # save as csv
-# write_csv(final, paste0(data_folder, "le_hle_scot.csv"))
-# 
-# # Save data to shiny_app folder
-# saveRDS(final, file = paste0(shiny_folder,"le_hle_scot.rds"))
 
 # END

@@ -62,14 +62,13 @@ server <- function(input, output) {
   
   # adds a note to highlight that axis does not start at zero for some measures
   output$axis_note <- renderText({
-    
-   if(input$measure %in% c("Life expectancy", "Healthy life expectancy")) {
-      axis_note <- paste0("note: y-axis does not start at zero <br> 
-                          2020-2022 Life expectancy estimates are provisional <br>
-                          Publication of 2020-2022 Healthy life expectancy delayed until 2025")}
-    else {}
+
+    axis_note <- paste0("Note: y-axis does not start at zero <br> ",
+                          "HLE time series produced using ",
+       tags$a("revised methodology",
+              href = "https://osr.statisticsauthority.gov.uk/correspondence/alan-ferrier-to-ed-humpherson-temporary-suspension-of-accredited-official-statistics-status-of-national-records-scotlands-healthy-life-expectancy-statistics/", target = "_blank"))
     })
-  
+    
   # creates chart
   output$chart <- renderPlotly({
     
