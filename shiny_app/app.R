@@ -115,11 +115,7 @@ server <- function(input, output) {
                     symbol= ~sex, symbols = list('circle','square'), marker = list(size= 8),
                     width = 650, height = 350,
                     text=tooltip, hoverinfo="text") %>%  
-      
-      
-      # add_ribbons(ymin = ~lci, ymax = ~uci, showlegend = F,
-      #             opacity = 0.2) %>%
-        
+
      # Layout
       layout(annotations = list(), #It needs this because of a buggy behaviour
              yaxis = list(title = yaxistitle, #rangemode="tozero", 
